@@ -1,87 +1,330 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>YouTube Subscriber War Grid</title>
-    <style>
-        body { background: black; color: white; font-family: Arial; margin: 0; overflow-x: hidden; }
-        .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; padding: 10px; }
-        .channel { 
-            background: #222; 
-            border-radius: 5px; 
-            padding: 5px 10px; 
-            display: flex; 
-            align-items: center; 
-            width: 500px; 
-            height: 70px; 
-            position: relative; 
-            overflow: hidden; 
-            transition: box-shadow 0.3s ease;
-        }
-        .rank { width: 30px; font-weight: bold; text-align: center; }
-        .icon { width: 40px; height: 40px; border-radius: 50%; margin: 0 10px; }
-        .name { flex-grow: 1; font-size: 2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .subs { font-size: 1.5em; font-weight: bold; }
-        .views, .videos, .subchange { font-size: 0.8em; color: #ccc; }
-        
-        /* Background + Progress Bar */
-        .bar { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.05); z-index: 0; }
-        .progress { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.15); z-index: 0; transition: width 1s ease; }
-        
-        .content { position: relative; z-index: 1; display: flex; align-items: center; width: 100%; justify-content: space-between; }
-        .milestone { position: absolute; bottom: 0; left: 0; height: 5px; background: silver; transition: width 1s ease; }
-        .up { color: lime; margin-left: 5px; }
-        .down { color: red; margin-left: 5px; }
-        .stats { display: flex; flex-direction: column; align-items: flex-end; }
+<meta charset="UTF-8" />
+<title>YouTube Subscriber War Grid & Comparison</title>
+<style>
+  /* Basic reset and fonts */
+  body { background: black; color: white; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+  a, button { cursor: pointer; }
+  
+  /* Nav bar */
+  #navTabs {
+    display: flex;
+    background: #111;
+    border-bottom: 2px solid #333;
+    user-select: none;
+  }
+  #navTabs button {
+    flex: 1;
+    padding: 12px 0;
+    background: #111;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: border-color 0.3s ease;
+  }
+  #navTabs button.active {
+    border-bottom-color: #ffcc00;
+    color: #ffcc00;
+  }
+  #navTabs button:hover:not(.active) {
+    background: #222;
+  }
+  
+  /* Containers for pages */
+  .page {
+    display: none;
+    padding: 10px;
+  }
+  .page.active {
+    display: block;
+  }
+  
+  /* Grid styles (existing) */
+  .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; padding: 10px; }
+  .channel { 
+    background: #222; 
+    border-radius: 5px; 
+    padding: 5px 10px; 
+    display: flex; 
+    align-items: center; 
+    width: 500px; 
+    height: 70px; 
+    position: relative; 
+    overflow: hidden; 
+    cursor: pointer;
+    transition: border 0.5s ease;
+  }
+  .rank { width: 30px; font-weight: bold; text-align: center; }
+  .icon { width: 40px; height: 40px; border-radius: 50%; margin: 0 10px; }
+  .name { flex-grow: 1; font-size: 2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .subs { font-size: 1.5em; font-weight: bold; }
+  .views, .videos, .subchange { font-size: 0.8em; color: #ccc; }
+  .bar { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.1); z-index: 0; transition: width 1s ease; }
+  .milestone { position: absolute; bottom: 0; left: 0; height: 5px; background: silver; transition: width 1s ease; }
+  .up { color: lime; margin-left: 5px; }
+  .down { color: red; margin-left: 5px; }
+  .stats { display: flex; flex-direction: column; align-items: flex-end; }
 
-        /* Glow animations */
-        @keyframes glowGreen { 0% { box-shadow: 0 0 15px lime; } 100% { box-shadow: 0 0 0 transparent; } }
-        @keyframes glowRed { 0% { box-shadow: 0 0 15px red; } 100% { box-shadow: 0 0 0 transparent; } }
-        .channel.glow-green { animation: glowGreen 3s ease-out; }
-        .channel.glow-red { animation: glowRed 3s ease-out; }
+  /* Glow Animations */
+  .glow-green { box-shadow: 0 0 20px 5px lime; transition: box-shadow 0.3s ease; }
+  .glow-red { box-shadow: 0 0 20px 5px red; transition: box-shadow 0.3s ease; }
 
-        /* Rank change fade (yellow) */
-        @keyframes rankFlash { 0% { background-color: yellow; } 100% { background-color: #222; } }
-        .channel.rank-flash { animation: rankFlash 1s ease-out; }
+  /* Rank Up Flash */
+  .rank-flash { animation: rankFlash 1s; }
+  @keyframes rankFlash {
+    0% { background-color: yellow; }
+    100% { background-color: transparent; }
+  }
 
-        /* Milestone celebration (rainbow pulse) */
-        @keyframes milestonePulse {
-            0% { box-shadow: 0 0 20px red; }
-            25% { box-shadow: 0 0 20px orange; }
-            50% { box-shadow: 0 0 20px lime; }
-            75% { box-shadow: 0 0 20px cyan; }
-            100% { box-shadow: 0 0 20px magenta; }
-        }
-        .channel.milestone-hit { animation: milestonePulse 2s ease-out; }
+  /* Milestone Rainbow Border */
+  .milestone-hit { animation: rainbowBorder 2s linear infinite; }
+  @keyframes rainbowBorder {
+    0% { border: 2px solid red; }
+    20% { border: 2px solid orange; }
+    40% { border: 2px solid yellow; }
+    60% { border: 2px solid green; }
+    80% { border: 2px solid blue; }
+    100% { border: 2px solid violet; }
+  }
 
-        /* Rank change arrows */
-        .rankchange { font-size: 0.8em; margin-left: 2px; }
-        .rankchange.up { color: lime; }
-        .rankchange.down { color: red; }
+  /* Activity Feed */
+  #feed { 
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: Arial;
+    padding: 10px;
+    background: #111;
+    color: white;
+    border-top: 2px solid #333;
+  }
+  #feedList { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
 
-        /* Confetti */
-        .confetti {
-            position: fixed;
-            width: 8px;
-            height: 8px;
-            background-color: red;
-            animation: fall 3s linear forwards;
-            z-index: 9999;
-        }
-        @keyframes fall {
-            to {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
-        }
-    </style>
+  /* Modal Styles */
+  #channelModal {
+    display: none;
+    position: fixed;
+    top:0; left:0; width:100vw; height:100vh;
+    background: rgba(0,0,0,0.9);
+    color: white;
+    z-index: 10000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  #modalClose {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    font-size: 2em;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    user-select: none;
+    z-index: 10001;
+  }
+  #modalContent {
+    max-width: 800px;
+    margin: 60px auto 40px auto;
+    background: #111;
+    border-radius: 10px;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  #modalBanner {
+    width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: #222;
+  }
+  #modalHeader {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  #modalIcon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  #modalTitle {
+    font-size: 2em;
+    font-weight: bold;
+    flex-grow: 1;
+    overflow-wrap: break-word;
+  }
+  #modalStats {
+    margin-top: 15px;
+    font-size: 1.1em;
+    line-height: 1.4em;
+    color: #ccc;
+  }
+  #modalDescription {
+    margin-top: 15px;
+    font-size: 1em;
+    line-height: 1.5em;
+    color: #ddd;
+    white-space: pre-wrap;
+  }
+  #latestVideo {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    cursor: pointer;
+  }
+  #latestVideo img {
+    width: 160px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  #latestVideo div {
+    font-size: 1.1em;
+    color: #eee;
+    max-width: 600px;
+    overflow-wrap: break-word;
+  }
+  #latestVideo:hover {
+    text-decoration: underline;
+    color: #ff0;
+  }
+
+  @media (max-width: 600px) {
+    .channel { width: 95vw; }
+    #modalContent { max-width: 95vw; margin: 60px 10px 40px 10px; }
+    #modalHeader { flex-direction: column; align-items: flex-start; }
+    #modalIcon { width: 60px; height: 60px; }
+    #modalTitle { font-size: 1.5em; }
+    #latestVideo img { width: 120px; height: 67px; }
+  }
+
+  /* Comparison page styles */
+  #compareForm {
+    max-width: 600px;
+    margin: 20px auto;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  #compareForm select {
+    padding: 10px;
+    font-size: 1em;
+    border-radius: 5px;
+    border: none;
+    width: 45%;
+  }
+  #compareResults {
+    max-width: 900px;
+    margin: 20px auto;
+    background: #222;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 30px;
+  }
+  .compareCard {
+    background: #111;
+    border-radius: 8px;
+    padding: 15px;
+    width: 40%;
+    min-width: 280px;
+    box-sizing: border-box;
+  }
+  .compareCard h2 {
+    margin-top: 0;
+    font-size: 1.6em;
+    margin-bottom: 10px;
+    word-break: break-word;
+  }
+  .compareStat {
+    font-size: 1.1em;
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #444;
+    padding-bottom: 6px;
+  }
+  .compareStat span.diff {
+    font-weight: bold;
+  }
+  .diff.positive {
+    color: lime;
+  }
+  .diff.negative {
+    color: red;
+  }
+</style>
 </head>
 <body>
-    <div class="grid" id="channelGrid"></div>
-    <audio id="ding" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
+
+  <nav id="navTabs" role="tablist" aria-label="Main navigation">
+    <button id="tabGrid" role="tab" aria-selected="true" aria-controls="pageGrid" tabindex="0" class="active">Subscriber War Grid</button>
+    <button id="tabCompare" role="tab" aria-selected="false" aria-controls="pageCompare" tabindex="-1">Compare Channels</button>
+  </nav>
+
+  <main>
+    <!-- Grid Page -->
+    <section id="pageGrid" class="page active" role="tabpanel" aria-labelledby="tabGrid">
+      <div class="grid" id="channelGrid" aria-live="polite" aria-relevant="additions"></div>
+
+      <div id="feed" aria-label="Live activity feed" role="log" aria-live="polite" aria-atomic="false">
+        <strong>Live Activity Feed</strong>
+        <ul id="feedList"></ul>
+      </div>
+    </section>
+
+    <!-- Compare Page -->
+    <section id="pageCompare" class="page" role="tabpanel" aria-labelledby="tabCompare">
+      <form id="compareForm" aria-label="Channel comparison form">
+        <select id="compareSelect1" aria-label="Select first channel to compare">
+          <option value="">Select Channel 1</option>
+        </select>
+        <select id="compareSelect2" aria-label="Select second channel to compare">
+          <option value="">Select Channel 2</option>
+        </select>
+      </form>
+
+      <div id="compareResults" aria-live="polite" aria-atomic="true" aria-relevant="all" aria-label="Comparison results">
+        <p>Select two different channels to compare their stats side-by-side.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal for detailed channel info -->
+  <div id="channelModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDescription">
+    <div id="modalClose" title="Close modal" tabindex="0" role="button" aria-label="Close channel details">&times;</div>
+    <div id="modalContent">
+      <img id="modalBanner" src="" alt="Channel Banner" />
+      <div id="modalHeader">
+          <img id="modalIcon" src="" alt="Channel Icon" />
+          <div id="modalTitle"></div>
+      </div>
+      <div id="modalStats"></div>
+      <div id="modalDescription"></div>
+      <a id="latestVideo" href="#" target="_blank" rel="noopener" style="display:none;">
+          <img src="" alt="Latest Video Thumbnail" />
+          <div id="latestVideoTitle"></div>
+      </a>
+    </div>
+  </div>
 
 <script>
-    const API_KEY = 'AIzaSyBhzS9zvb_YIoGjLFK_2PUVWg7DOM9MWkQ';
+const API_KEY = 'AIzaSyBhzS9zvb_YIoGjLFK_2PUVWg7DOM9MWkQ';
+
     const CHANNEL_IDS = [
         'UCJIzSiJ7SA2JnSJJ_KTdWvg','UCG9eIbDI-5D04HYAfnifkFg','UCSSfq3nNRhpV7uh0NfBYxvg',
         'UCTr7Cuz7BPx7RRVT9ndsaQQ','UCRZNK7dbTiHBUkd9hwaZDJA','UC2oOiUYu0GYrsfCNfDZs19A',
@@ -95,216 +338,347 @@
         'UCTK2hDxZbhUpxX0_nd7IauA','UC_b4qNyN1fsRBgd_BIhH64g',
     ];
 
-    let channelData = {};
-    let history24h = {};
-    let lastHourRanks = {};
-    let lastSubs = {};
-    let lastMilestone = {};
+  let channelData = {};
+  let history24h = {};
+  let lastRanks = {};
+  let milestoneHits = {};
+  let glowChannels = {};
 
-    function animateValue(element, start, end, duration = 800) {
-        const range = end - start;
-        const startTime = performance.now();
-        function update(time) {
-            let progress = Math.min((time - startTime) / duration, 1);
-            let value = Math.round(start + range * progress);
-            element.textContent = value.toLocaleString();
-            if (progress < 1) requestAnimationFrame(update);
-        }
-        requestAnimationFrame(update);
+  // === NAV TABS ===
+  const tabGrid = document.getElementById('tabGrid');
+  const tabCompare = document.getElementById('tabCompare');
+  const pageGrid = document.getElementById('pageGrid');
+  const pageCompare = document.getElementById('pageCompare');
+
+  function switchTab(tab) {
+    if(tab === 'grid'){
+      tabGrid.classList.add('active');
+      tabGrid.setAttribute('aria-selected', 'true');
+      tabGrid.setAttribute('tabindex', '0');
+
+      tabCompare.classList.remove('active');
+      tabCompare.setAttribute('aria-selected', 'false');
+      tabCompare.setAttribute('tabindex', '-1');
+
+      pageGrid.classList.add('active');
+      pageCompare.classList.remove('active');
+    } else {
+      tabCompare.classList.add('active');
+      tabCompare.setAttribute('aria-selected', 'true');
+      tabCompare.setAttribute('tabindex', '0');
+
+      tabGrid.classList.remove('active');
+      tabGrid.setAttribute('aria-selected', 'false');
+      tabGrid.setAttribute('tabindex', '-1');
+
+      pageCompare.classList.add('active');
+      pageGrid.classList.remove('active');
     }
-
-    function launchConfetti() {
-        for (let i = 0; i < 50; i++) {
-            const conf = document.createElement('div');
-            conf.className = 'confetti';
-            conf.style.backgroundColor = `hsl(${Math.random()*360},100%,50%)`;
-            conf.style.left = `${Math.random() * window.innerWidth}px`;
-            conf.style.top = `-10px`;
-            conf.style.transform = `rotate(${Math.random()*360}deg)`;
-            document.body.appendChild(conf);
-            setTimeout(()=>conf.remove(), 3000);
-        }
-    }
-
-    async function fetchData() {
-        const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${CHANNEL_IDS.join(',')}&key=${API_KEY}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        data.items.forEach(item => {
-            let id = item.id;
-            let subs = parseInt(item.statistics.subscriberCount);
-            let views = parseInt(item.statistics.viewCount);
-            let videos = parseInt(item.statistics.videoCount);
-
-            if (!channelData[id]) {
-                channelData[id] = { estimatedSubs: subs, lastAPI: subs, growthPerSec: 0 };
-            } else {
-                let diff = subs - channelData[id].lastAPI;
-                channelData[id].growthPerSec = diff / 10; 
-                channelData[id].lastAPI = subs;
-            }
-
-            if (!history24h[id]) history24h[id] = [];
-            history24h[id].push(subs);
-            if (history24h[id].length > 1440) history24h[id].shift();
-
-            channelData[id].id = id;
-            channelData[id].name = item.snippet.title;
-            channelData[id].icon = item.snippet.thumbnails.default.url;
-            channelData[id].views = views;
-            channelData[id].videos = videos;
-            channelData[id].estimatedSubs = subs;
-        });
-
-        updateGrid();
-    }
-
-    function getCurrentMilestone(subs) {
-        if (subs >= 100000000) return 100000000;
-        if (subs >= 10000000) return 10000000;
-        if (subs >= 1000000) return 1000000;
-        if (subs >= 100000) return 100000;
-        return 0;
-    }
-
-    function updateGrid() {
-        let channels = Object.values(channelData).map(ch => ({
-            id: ch.id,
-            name: ch.name,
-            icon: ch.icon,
-            subs: Math.round(ch.estimatedSubs),
-            views: ch.views,
-            videos: ch.videos,
-            sub24hChange: history24h[ch.id] ? ch.estimatedSubs - history24h[ch.id][0] : 0
-        }));
-
-        channels.sort((a, b) => b.subs - a.subs);
-        let maxSubs = channels[0]?.subs || 1;
-
-        channels.forEach((ch, i) => {
-            if (!lastHourRanks[ch.id]) lastHourRanks[ch.id] = i + 1;
-        });
-
-        let html = '';
-        channels.forEach((ch, index) => {
-            let barWidth = (ch.subs / maxSubs) * 100;
-
-            let milestones = [100000, 1000000, 10000000, 100000000];
-            let currentMilestone = 0;
-            let nextMilestone = milestones[0];
-            for (let i = 0; i < milestones.length; i++) {
-                if (ch.subs >= milestones[i]) {
-                    currentMilestone = milestones[i];
-                    nextMilestone = milestones[i + 1] || milestones[i];
-                } else break;
-            }
-            let progress = ((ch.subs - currentMilestone) / (nextMilestone - currentMilestone)) * 100;
-            let milestoneColor = currentMilestone >= 10000000 ? 'red' :
-                                 currentMilestone >= 1000000 ? 'lightblue' :
-                                 currentMilestone >= 100000 ? 'gold' : 'silver';
-
-            let lastRank = lastHourRanks[ch.id] ?? index + 1;
-            let rankDiff = lastRank - (index + 1);
-            let rankArrow = '';
-            if (rankDiff > 0) rankArrow = `<span class="rankchange up">▲${rankDiff}</span>`;
-            else if (rankDiff < 0) rankArrow = `<span class="rankchange down">▼${Math.abs(rankDiff)}</span>`;
-
-            let subChangeArrow = ch.sub24hChange > 0 ? `<span class="up">▲ ${Math.round(ch.sub24hChange)}</span>` :
-                                 ch.sub24hChange < 0 ? `<span class="down">▼ ${Math.abs(Math.round(ch.sub24hChange))}</span>` : '';
-
-            let classes = [];
-            if (lastSubs[ch.id] != null) {
-                if (ch.subs > lastSubs[ch.id]) classes.push('glow-green');
-                if (ch.subs < lastSubs[ch.id]) classes.push('glow-red');
-            }
-            lastSubs[ch.id] = ch.subs;
-
-            if (rankDiff !== 0) classes.push('rank-flash');
-
-            let currentMilestoneHit = getCurrentMilestone(ch.subs);
-            if (!lastMilestone[ch.id]) lastMilestone[ch.id] = currentMilestoneHit;
-            if (currentMilestoneHit > lastMilestone[ch.id]) {
-                classes.push('milestone-hit');
-                lastMilestone[ch.id] = currentMilestoneHit;
-                launchConfetti();
-                document.getElementById('ding').play();
-            }
-
-            html += `
-                <div class="channel ${classes.join(' ')}">
-                    <div class="bar"></div>
-                    <div class="progress" style="width:${barWidth}%"></div>
-                    <div class="milestone" style="width:${progress}%; background:${milestoneColor}"></div>
-                    <div class="content">
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <div class="rank">#${index + 1}${rankArrow}</div>
-                            <img src="${ch.icon}" class="icon">
-                            <div class="name">${ch.name}</div>
-                        </div>
-                        <div class="stats">
-                            <div class="subs" id="subs-${ch.id}">${ch.subs.toLocaleString()}</div>
-                            <div class="subchange">${subChangeArrow}</div>
-                            <div class="views">Views: ${ch.views.toLocaleString()}</div>
-                            <div class="videos">Videos: ${ch.videos}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        const grid = document.getElementById('channelGrid');
-        grid.innerHTML = html;
-
-        channels.forEach(ch => {
-            let el = document.getElementById(`subs-${ch.id}`);
-            let oldValue = parseInt(el.textContent.replace(/,/g, '')) || ch.subs;
-            animateValue(el, oldValue, ch.subs, 800);
-        });
-    }
-
-    setInterval(() => {
-        let channels = Object.values(channelData)
-            .sort((a,b) => b.estimatedSubs - a.estimatedSubs);
-        channels.forEach((ch,i) => lastHourRanks[ch.id] = i+1);
-    }, 3600000);
-// Test animations on console command 'animtest'
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    let command = window.lastConsoleCommand?.trim().toLowerCase();
-    if (command === 'animtest') {
-      console.log('Running animation test!');
-
-      // Rank-up flash on all channels
-      Object.values(channelData).forEach(ch => {
-        const el = document.getElementById(`ch-${ch.id}`);
-        if (el) {
-          el.classList.add('rank-flash');
-          setTimeout(() => el.classList.remove('rank-flash'), 1000);
-        }
-      });
-
-      // Milestone animation + confetti + sound on all channels
-      Object.values(channelData).forEach(ch => {
-        const el = document.getElementById(`ch-${ch.id}`);
-        if (el) {
-          el.classList.add('milestone-hit');
-          launchConfetti();
-          document.getElementById('ding').play();
-          setTimeout(() => el.classList.remove('milestone-hit'), 2000);
-        }
-      });
-    }
-    window.lastConsoleCommand = '';
-  } else if (e.key.length === 1) {
-    window.lastConsoleCommand = (window.lastConsoleCommand || '') + e.key;
-  } else if (e.key === 'Backspace') {
-    window.lastConsoleCommand = (window.lastConsoleCommand || '').slice(0, -1);
   }
-});
 
-    fetchData();
-    setInterval(fetchData, 10000);
+  tabGrid.addEventListener('click', () => switchTab('grid'));
+  tabCompare.addEventListener('click', () => switchTab('compare'));
+
+  // === FETCH CHANNEL DATA ===
+  async function fetchData() {
+    const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&id=${CHANNEL_IDS.join(',')}&key=${API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    data.items.forEach(item => {
+      let id = item.id;
+      let subs = parseInt(item.statistics.subscriberCount);
+      let views = parseInt(item.statistics.viewCount);
+      let videos = parseInt(item.statistics.videoCount);
+
+      if (!channelData[id]) {
+        channelData[id] = { 
+          estimatedSubs: subs, 
+          lastAPI: subs, 
+          lastSubs: subs, 
+          displayedSubs: subs,
+          growthPerSec: 0,
+          description: item.snippet.description,
+          publishedAt: item.snippet.publishedAt,
+          bannerUrl: item.brandingSettings?.image?.bannerExternalUrl || '',
+        };
+      } else {
+        let diff = subs - channelData[id].lastAPI;
+        channelData[id].growthPerSec = diff / 10;
+        channelData[id].lastAPI = subs;
+      }
+
+      if (!history24h[id]) history24h[id] = [];
+      history24h[id].push(subs);
+      if (history24h[id].length > 1440) history24h[id].shift();
+
+      if (channelData[id].lastSubs !== undefined && channelData[id].lastSubs !== subs) {
+        let diff = subs - channelData[id].lastSubs;
+        glowChannels[id] = diff > 0 ? 'green' : 'red';
+      }
+
+      channelData[id].id = id;
+      channelData[id].name = item.snippet.title;
+      channelData[id].icon = item.snippet.thumbnails.default.url;
+      channelData[id].views = views;
+      channelData[id].videos = videos;
+      channelData[id].lastSubs = subs;
+      channelData[id].estimatedSubs = subs;
+    });
+
+    populateCompareSelectors();
+    updateGrid();
+    applyGlows();
+  }
+
+  function populateCompareSelectors() {
+    const sel1 = document.getElementById('compareSelect1');
+    const sel2 = document.getElementById('compareSelect2');
+    // Clear except placeholder
+    sel1.innerHTML = '<option value="">Select Channel 1</option>';
+    sel2.innerHTML = '<option value="">Select Channel 2</option>';
+
+    Object.values(channelData).forEach(ch => {
+      const opt1 = document.createElement('option');
+      opt1.value = ch.id;
+      opt1.textContent = ch.name;
+      sel1.appendChild(opt1);
+
+      const opt2 = document.createElement('option');
+      opt2.value = ch.id;
+      opt2.textContent = ch.name;
+      sel2.appendChild(opt2);
+    });
+  }
+
+  // Highlight glow effect for subs change
+  function applyGlows() {
+    Object.entries(glowChannels).forEach(([id, color]) => {
+      const el = document.getElementById(`ch-${id}`);
+      if (el) {
+        const className = color === 'green' ? 'glow-green' : 'glow-red';
+        el.classList.add(className);
+        setTimeout(() => el.classList.remove(className), 3000);
+      }
+    });
+    glowChannels = {};
+  }
+
+  // Update subscriber grid UI
+  function updateGrid() {
+    let channels = Object.values(channelData).map(ch => ({
+      id: ch.id,
+      name: ch.name,
+      icon: ch.icon,
+      subs: Math.round(ch.estimatedSubs),
+      views: ch.views,
+      videos: ch.videos,
+      sub24hChange: history24h[ch.id] ? ch.estimatedSubs - history24h[ch.id][0] : 0
+    }));
+
+    channels.sort((a, b) => b.subs - a.subs);
+    let maxSubs = channels[0]?.subs || 1;
+
+    // Track rank changes for arrows
+    let newRanks = {};
+    channels.forEach((ch, i) => {
+      newRanks[ch.id] = i + 1;
+    });
+
+    const feedList = document.getElementById('feedList');
+
+    let html = '';
+    channels.forEach((ch, index) => {
+      const prevRank = lastRanks[ch.id];
+      const newRank = newRanks[ch.id];
+      const rankChanged = prevRank && prevRank !== newRank;
+      const rankUpArrow = rankChanged ? (newRank < prevRank ? '▲' : '▼') : '';
+      const rankClass = rankChanged ? 'rank-flash' : '';
+
+      // Sub change arrow
+      const subChangeArrow = ch.sub24hChange > 0 ? `<span class="up">▲ ${Math.round(ch.sub24hChange)}</span>` :
+        ch.sub24hChange < 0 ? `<span class="down">▼ ${Math.abs(Math.round(ch.sub24hChange))}</span>` : '';
+
+      const barWidth = (ch.subs / maxSubs) * 100;
+
+      html += `
+        <div class="channel ${rankClass}" id="ch-${ch.id}" tabindex="0" role="button" aria-label="${ch.name}, rank ${newRank}, subscribers ${ch.subs.toLocaleString()}" data-channelid="${ch.id}">
+          <div class="bar" style="width:${barWidth}%;"></div>
+          <div class="content" style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="rank">${newRank} ${rankUpArrow}</div>
+              <img src="${ch.icon}" class="icon" alt="${ch.name} channel icon"/>
+              <div class="name">${ch.name}</div>
+            </div>
+            <div class="stats" style="text-align: right;">
+              <div class="subs">${ch.subs.toLocaleString()}</div>
+              <div class="subchange">${subChangeArrow}</div>
+              <div class="views">Views: ${ch.views.toLocaleString()}</div>
+              <div class="videos">Videos: ${ch.videos}</div>
+            </div>
+          </div>
+        </div>`;
+    });
+    lastRanks = newRanks;
+    document.getElementById('channelGrid').innerHTML = html;
+
+    // Add click listeners for modal open
+    document.querySelectorAll('.channel').forEach(el => {
+      el.addEventListener('click', () => openModal(el.dataset.channelid));
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openModal(el.dataset.channelid);
+        }
+      });
+    });
+
+    // Scroll feed - keep max 20 items
+    while(feedList.children.length > 20){
+      feedList.removeChild(feedList.firstChild);
+    }
+  }
+
+  // Open modal with detailed info
+  async function openModal(channelId) {
+    const ch = channelData[channelId];
+    if (!ch) return;
+
+    // Fetch latest video
+    async function fetchLatestVideo(channelId) {
+      const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${channelId}&part=snippet&order=date&maxResults=1&type=video`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data.items?.[0];
+    }
+
+    const modal = document.getElementById('channelModal');
+    const banner = document.getElementById('modalBanner');
+    const icon = document.getElementById('modalIcon');
+    const title = document.getElementById('modalTitle');
+    const stats = document.getElementById('modalStats');
+    const description = document.getElementById('modalDescription');
+    const latestVideoAnchor = document.getElementById('latestVideo');
+    const latestVideoImg = latestVideoAnchor.querySelector('img');
+    const latestVideoTitle = document.getElementById('latestVideoTitle');
+
+    banner.src = ch.bannerUrl || '';
+    icon.src = ch.icon;
+    title.textContent = ch.name;
+    description.textContent = ch.description || '(No description available)';
+    stats.innerHTML = `
+      Subscribers: ${ch.estimatedSubs.toLocaleString()}<br/>
+      Total Views: ${ch.views.toLocaleString()}<br/>
+      Videos: ${ch.videos.toLocaleString()}<br/>
+      Created: ${new Date(ch.publishedAt).toLocaleDateString()}
+    `;
+
+    latestVideoAnchor.style.display = 'none';
+    latestVideoAnchor.href = '#';
+    latestVideoImg.src = '';
+    latestVideoTitle.textContent = '';
+
+    const latestVideo = await fetchLatestVideo(channelId);
+    if (latestVideo) {
+      latestVideoAnchor.style.display = 'flex';
+      latestVideoAnchor.href = `https://www.youtube.com/watch?v=${latestVideo.id.videoId}`;
+      latestVideoImg.src = latestVideo.snippet.thumbnails.medium.url;
+      latestVideoImg.alt = `Latest video thumbnail of ${ch.name}`;
+      latestVideoTitle.textContent = latestVideo.snippet.title;
+    }
+
+    modal.style.display = 'block';
+    document.getElementById('modalClose').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('channelModal').style.display = 'none';
+  }
+
+  // Modal close handlers
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalClose').addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      closeModal();
+    }
+  });
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('channelModal').style.display === 'block') {
+      closeModal();
+    }
+  });
+
+  // Compare Page logic
+  const sel1 = document.getElementById('compareSelect1');
+  const sel2 = document.getElementById('compareSelect2');
+  const compareResults = document.getElementById('compareResults');
+
+  sel1.addEventListener('change', updateComparison);
+  sel2.addEventListener('change', updateComparison);
+
+  function updateComparison() {
+    const id1 = sel1.value;
+    const id2 = sel2.value;
+
+    if (!id1 || !id2 || id1 === id2) {
+      compareResults.innerHTML = '<p>Select two different channels to compare their stats side-by-side.</p>';
+      return;
+    }
+
+    const ch1 = channelData[id1];
+    const ch2 = channelData[id2];
+
+    if (!ch1 || !ch2) {
+      compareResults.innerHTML = '<p>Channel data not loaded yet.</p>';
+      return;
+    }
+
+    function diffClass(val) {
+      if (val > 0) return 'diff positive';
+      if (val < 0) return 'diff negative';
+      return 'diff';
+    }
+
+    function formatNumber(n) {
+      return n.toLocaleString();
+    }
+
+    // Compute differences
+    const subsDiff = ch1.estimatedSubs - ch2.estimatedSubs;
+    const viewsDiff = ch1.views - ch2.views;
+    const videosDiff = ch1.videos - ch2.videos;
+    const createdDiff = new Date(ch1.publishedAt) - new Date(ch2.publishedAt);
+
+    compareResults.innerHTML = `
+      <div class="compareCard" aria-label="${ch1.name} statistics">
+        <h2>${ch1.name}</h2>
+        <p><strong>Subscribers:</strong> ${formatNumber(ch1.estimatedSubs)}</p>
+        <p><strong>Total Views:</strong> ${formatNumber(ch1.views)}</p>
+        <p><strong>Videos:</strong> ${formatNumber(ch1.videos)}</p>
+        <p><strong>Created:</strong> ${new Date(ch1.publishedAt).toLocaleDateString()}</p>
+      </div>
+      <div class="compareCard" aria-label="${ch2.name} statistics">
+        <h2>${ch2.name}</h2>
+        <p><strong>Subscribers:</strong> ${formatNumber(ch2.estimatedSubs)}</p>
+        <p><strong>Total Views:</strong> ${formatNumber(ch2.views)}</p>
+        <p><strong>Videos:</strong> ${formatNumber(ch2.videos)}</p>
+        <p><strong>Created:</strong> ${new Date(ch2.publishedAt).toLocaleDateString()}</p>
+      </div>
+      <div style="width:100%; margin-top: 20px; font-size: 1.1em; color: #ffcc00; text-align:center;">
+        <p>Differences:</p>
+        <p><strong>Subscribers:</strong> <span class="${diffClass(subsDiff)}">${subsDiff.toLocaleString()}</span></p>
+        <p><strong>Total Views:</strong> <span class="${diffClass(viewsDiff)}">${viewsDiff.toLocaleString()}</span></p>
+        <p><strong>Videos:</strong> <span class="${diffClass(videosDiff)}">${videosDiff.toLocaleString()}</span></p>
+        <p><strong>Created Date Difference:</strong> <span class="${diffClass(createdDiff)}">${Math.floor(createdDiff / (1000*60*60*24))} days</span></p>
+      </div>
+    `;
+  }
+
+  // Initial fetch & periodic refresh
+  fetchData();
+  setInterval(fetchData, 10000);
 </script>
+
 </body>
 </html>
