@@ -268,6 +268,40 @@
             .sort((a,b) => b.estimatedSubs - a.estimatedSubs);
         channels.forEach((ch,i) => lastHourRanks[ch.id] = i+1);
     }, 3600000);
+// Test animations on console command 'animtest'
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    let command = window.lastConsoleCommand?.trim().toLowerCase();
+    if (command === 'animtest') {
+      console.log('Running animation test!');
+
+      // Rank-up flash on all channels
+      Object.values(channelData).forEach(ch => {
+        const el = document.getElementById(`ch-${ch.id}`);
+        if (el) {
+          el.classList.add('rank-flash');
+          setTimeout(() => el.classList.remove('rank-flash'), 1000);
+        }
+      });
+
+      // Milestone animation + confetti + sound on all channels
+      Object.values(channelData).forEach(ch => {
+        const el = document.getElementById(`ch-${ch.id}`);
+        if (el) {
+          el.classList.add('milestone-hit');
+          launchConfetti();
+          document.getElementById('ding').play();
+          setTimeout(() => el.classList.remove('milestone-hit'), 2000);
+        }
+      });
+    }
+    window.lastConsoleCommand = '';
+  } else if (e.key.length === 1) {
+    window.lastConsoleCommand = (window.lastConsoleCommand || '') + e.key;
+  } else if (e.key === 'Backspace') {
+    window.lastConsoleCommand = (window.lastConsoleCommand || '').slice(0, -1);
+  }
+});
 
     fetchData();
     setInterval(fetchData, 10000);
