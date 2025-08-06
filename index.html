@@ -75,12 +75,63 @@
     z-index: 1;
   }
   
-  /* Milestone colors */
- .milestone-brown { background: #8B4513; } /* Under 100 */
+  /* Milestone colors with animated gradients */
+  .milestone-brown { background: #8B4513; } /* Under 100 */
   .milestone-silver { background: #C0C0C0; } /* Under 100K */
   .milestone-gold { background: linear-gradient(45deg, #FFD700, #FFA500, #FFFF00, #FFD700); } /* Under 1M */
-  .milestone-lightblue { background: linear-gradient(45deg, #87CEEB, #00BFFF, #ADD8E6, #87CEEB); } /* Under 10M */
-  .milestone-red { background: linear-gradient(45deg, #FF4444, #FF6B6B, #FF1744, #FF4444); } /* Under 100M */
+  
+  /* Animated 10M milestone (Diamond) */
+  .milestone-lightblue { 
+    background: linear-gradient(45deg, #87CEEB, #00BFFF, #ADD8E6, #87CEEB, #E0F6FF, #87CEEB);
+    background-size: 300% 300%;
+    animation: diamondShimmer 3s ease-in-out infinite;
+  }
+  
+  @keyframes diamondShimmer {
+    0%, 100% { 
+      background-position: 0% 50%; 
+      filter: brightness(1);
+    }
+    25% { 
+      background-position: 50% 0%; 
+      filter: brightness(1.2);
+    }
+    50% { 
+      background-position: 100% 50%; 
+      filter: brightness(1.4);
+    }
+    75% { 
+      background-position: 50% 100%; 
+      filter: brightness(1.2);
+    }
+  }
+  
+  /* Animated 100M milestone (Ruby/Platinum) */
+  .milestone-red { 
+    background: linear-gradient(45deg, #FF4444, #FF1744, #DC143C, #B22222, #FF6B6B, #FF4444);
+    background-size: 400% 400%;
+    animation: rubyPulse 2s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+  }
+  
+  @keyframes rubyPulse {
+    0%, 100% { 
+      background-position: 0% 50%; 
+      filter: brightness(1) saturate(1);
+      box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+    }
+    33% { 
+      background-position: 100% 0%; 
+      filter: brightness(1.3) saturate(1.2);
+      box-shadow: 0 0 15px rgba(255, 68, 68, 0.8);
+    }
+    66% { 
+      background-position: 0% 100%; 
+      filter: brightness(1.1) saturate(1.1);
+      box-shadow: 0 0 20px rgba(255, 68, 68, 0.6);
+    }
+  }
+  
   .milestone-platinum { background: linear-gradient(45deg, #E5E4E2, #FFFFFF, #E5E4E2); } /* 100M+ */
   
   .up { color: lime; margin-left: 5px; }
@@ -285,16 +336,198 @@
   .diff.negative {
     color: red;
   }
+
+  /* Info page styles */
+  #infoContent {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #111;
+    border-radius: 10px;
+    line-height: 1.6;
+  }
+  
+  #infoContent h1 {
+    color: #ffcc00;
+    text-align: center;
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  }
+  
+  #infoContent h2 {
+    color: #87CEEB;
+    font-size: 1.8em;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 5px;
+  }
+  
+  #infoContent h3 {
+    color: #FFD700;
+    font-size: 1.4em;
+    margin-top: 25px;
+    margin-bottom: 10px;
+  }
+  
+  #infoContent p {
+    margin-bottom: 15px;
+    color: #ddd;
+  }
+  
+  #infoContent ul {
+    margin-bottom: 15px;
+    padding-left: 25px;
+  }
+  
+  #infoContent li {
+    margin-bottom: 8px;
+    color: #ddd;
+  }
+  
+  .milestone-demo {
+    display: inline-block;
+    width: 20px;
+    height: 4px;
+    margin: 0 5px;
+    vertical-align: middle;
+    border-radius: 2px;
+  }
+  
+  .feature-highlight {
+    background: #222;
+    border-left: 4px solid #ffcc00;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+  }
+  
+  .tech-specs {
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #ccc;
+    margin: 15px 0;
+  }
 </style>
 </head>
 <body>
 
   <nav id="navTabs" role="tablist" aria-label="Main navigation">
+    <button id="tabInfo" role="tab" aria-selected="false" aria-controls="pageInfo" tabindex="-1">Info & Guide</button>
     <button id="tabGrid" role="tab" aria-selected="true" aria-controls="pageGrid" tabindex="0" class="active">Subscriber War Grid</button>
     <button id="tabCompare" role="tab" aria-selected="false" aria-controls="pageCompare" tabindex="-1">Compare Channels</button>
   </nav>
 
   <main>
+    <!-- Info Page -->
+    <section id="pageInfo" class="page" role="tabpanel" aria-labelledby="tabInfo">
+      <div id="infoContent">
+        <h1>🎯 YouTube Subscriber War Grid</h1>
+        
+        <p style="text-align: center; font-size: 1.2em; color: #87CEEB; margin-bottom: 40px;">
+          Real-time tracking of a selection of roblox news/drama channels (and some others) in an epic subscriber battle!
+        </p>
+
+        <h2>🚀 What This Tool Does</h2>
+        <p>This website tracks subscriber counts for roblox drama/news YouTube channels in real-time, displaying them in a competitive grid format. Watch as channels battle for supremacy, with live updates every 10 seconds showing subscriber changes, rank movements, and milestone achievements.</p>
+
+        <h2>📊 Main Features</h2>
+        
+        <h3>Subscriber War Grid</h3>
+        <div class="feature-highlight">
+          <p><strong>Real-time Ranking:</strong> Channels are automatically sorted by subscriber count with live position updates.</p>
+          <p><strong>Visual Progress Bars:</strong> Each channel shows relative size compared to the #1 channel.</p>
+          <p><strong>24-Hour Change Tracking:</strong> Green ▲ for gains, red ▼ for losses with exact numbers. (resets if you refresh)</p>
+          <p><strong>Rank Change Indicators:</strong> Arrows show when channels move up or down in rankings.</p>
+        </div>
+
+        <h3>Milestone Progress System</h3>
+        <p>Every channel displays a colored progress bar at the bottom showing their journey to the next major milestone:</p>
+        <ul>
+          <li><span class="milestone-demo milestone-brown"></span><strong>Brown (0-100):</strong> Just starting out</li>
+          <li><span class="milestone-demo milestone-silver"></span><strong>Silver (100-100K):</strong> Growing audience</li>
+          <li><span class="milestone-demo milestone-gold"></span><strong>Gold (100K-1M):</strong> Established creator</li>
+          <li><span class="milestone-demo milestone-lightblue"></span><strong>Diamond (1M-10M):</strong> Major influencer with animated shimmer effect</li>
+          <li><span class="milestone-demo milestone-red"></span><strong>Ruby (10M-100M):</strong> Mega channel with pulsing animation and glow</li>
+          <li><span class="milestone-demo milestone-platinum"></span><strong>Platinum (100M+):</strong> Basically impossible for a roblox youtuber but its still here!</li>
+        </ul>
+
+        <h3>Live Activity Feed</h3>
+        <div class="feature-highlight">
+          <p>The bottom feed shows real-time events:</p>
+          <ul>
+            <li><strong>Subscriber Changes:</strong> Live gains/losses as they happen</li>
+            <li><strong>Rank Movements:</strong> When channels overtake each other</li>
+            <li><strong>Milestone Celebrations:</strong> 🎉 When channels hit major subscriber milestones</li>
+            <li><strong>Smart Filtering:</strong> Reduces spam by grouping similar events</li>
+          </ul>
+        </div>
+
+        <h3>Detailed Channel Modals</h3>
+        <p>Click any channel to see:</p>
+        <ul>
+          <li>Channel banner and detailed statistics</li>
+          <li>Creation date and total video count</li>
+          <li>Complete channel description</li>
+          <li>Latest uploaded video with thumbnail</li>
+          <li>Precise milestone progress percentage</li>
+        </ul>
+
+        <h3>Channel Comparison Tool</h3>
+        <p>Compare any two channels side-by-side with detailed statistics and differences highlighted in green (advantages) or red (disadvantages).</p>
+
+        <h2>🎨 Visual Effects & Animations</h2>
+        
+        <h3>Milestone Animations</h3>
+        <ul>
+          <li><strong>Diamond (1-10M) Shimmer:</strong> Beautiful blue gradient that shimmers and brightens</li>
+          <li><strong>Ruby (10-100M) Pulse:</strong> Intense red gradient with pulsing glow effect</li>
+          <li><strong>Rank Flash:</strong> Yellow flash when channels change positions</li>
+          <li><strong>Growth Glow:</strong> Green glow for subscriber gains, red for losses</li>
+        </ul>
+
+        <h3>Interactive Elements</h3>
+        <ul>
+          <li>Smooth hover effects on all clickable elements</li>
+          <li>Keyboard navigation support (Tab, Enter, Escape)</li>
+          <li>Mobile-responsive design that works on all devices</li>
+          <li>Accessibility features with proper ARIA labels</li>
+        </ul>
+
+        <h2>📈 How the Data Works</h2>
+        
+        <div class="tech-specs">
+          <p><strong>Update Frequency:</strong> Every 10 seconds</p>
+          <p><strong>Data Source:</strong> YouTube Data API v3</p>
+          <p><strong>History:</strong> 24-hour change tracking with 1440 data points</p>
+        </div>
+
+        <h2>💡 Pro Tips</h2>
+        <div class="feature-highlight">
+          <ul>
+            <li>Watch the feed during peak hours for the most activity</li>
+            <li>Look for the animated milestone bars - they indicate channels close to major milestones</li>
+            <li>Use the comparison tool to see how your favorite creators stack up</li>
+            <li>Check back regularly - subscriber wars can change rankings quickly!</li>
+            <li>Click channels for deep dives into their stats and latest content</li>
+          </ul>
+        </div>
+
+        <h2>🔧 Technical Details</h2>
+        <p>Built with vanilla JavaScript for maximum performance, using modern web APIs for real-time updates. The interface is fully responsive and follows web accessibility guidelines.</p>
+        
+        <div class="feature-highlight">
+          <p><strong>Browser Support:</strong> All modern browsers (Chrome, Firefox, Safari, Edge)</p>
+          <p><strong>Performance:</strong> Optimized for smooth animations even on lower-end devices</p>
+          <p><strong>Accessibility:</strong> Full keyboard navigation and screen reader support</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Grid Page -->
     <section id="pageGrid" class="page active" role="tabpanel" aria-labelledby="tabGrid">
       <div class="grid" id="channelGrid" aria-live="polite" aria-relevant="additions"></div>
@@ -504,37 +737,44 @@ const API_KEY = 'AIzaSyBhzS9zvb_YIoGjLFK_2PUVWg7DOM9MWkQ';
   }
 
   // === NAV TABS ===
+  const tabInfo = document.getElementById('tabInfo');
   const tabGrid = document.getElementById('tabGrid');
   const tabCompare = document.getElementById('tabCompare');
+  const pageInfo = document.getElementById('pageInfo');
   const pageGrid = document.getElementById('pageGrid');
   const pageCompare = document.getElementById('pageCompare');
 
   function switchTab(tab) {
-    if(tab === 'grid'){
+    // Reset all tabs
+    [tabInfo, tabGrid, tabCompare].forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+      t.setAttribute('tabindex', '-1');
+    });
+    
+    [pageInfo, pageGrid, pageCompare].forEach(p => {
+      p.classList.remove('active');
+    });
+
+    if(tab === 'info'){
+      tabInfo.classList.add('active');
+      tabInfo.setAttribute('aria-selected', 'true');
+      tabInfo.setAttribute('tabindex', '0');
+      pageInfo.classList.add('active');
+    } else if(tab === 'grid'){
       tabGrid.classList.add('active');
       tabGrid.setAttribute('aria-selected', 'true');
       tabGrid.setAttribute('tabindex', '0');
-
-      tabCompare.classList.remove('active');
-      tabCompare.setAttribute('aria-selected', 'false');
-      tabCompare.setAttribute('tabindex', '-1');
-
       pageGrid.classList.add('active');
-      pageCompare.classList.remove('active');
     } else {
       tabCompare.classList.add('active');
       tabCompare.setAttribute('aria-selected', 'true');
       tabCompare.setAttribute('tabindex', '0');
-
-      tabGrid.classList.remove('active');
-      tabGrid.setAttribute('aria-selected', 'false');
-      tabGrid.setAttribute('tabindex', '-1');
-
       pageCompare.classList.add('active');
-      pageGrid.classList.remove('active');
     }
   }
 
+  tabInfo.addEventListener('click', () => switchTab('info'));
   tabGrid.addEventListener('click', () => switchTab('grid'));
   tabCompare.addEventListener('click', () => switchTab('compare'));
 
